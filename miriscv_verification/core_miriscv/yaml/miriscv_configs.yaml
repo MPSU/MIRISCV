@@ -1,0 +1,7 @@
+# Miriscv core configurations files, holds the parameter sets that are tested under CI.
+# Each configuration must specify the same set of parameters
+
+# Spike simpulator compatitable config
+# We additionally passing MIRISCV_CFG_BOOT_ADDR define to the environment
+spike-compatitable:
+  BOOT_ADDR: "2147483648" # 32'h8000_0000 - spike boot address

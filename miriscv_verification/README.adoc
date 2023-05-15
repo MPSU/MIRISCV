@@ -1,0 +1,3 @@
+== Репозитрий для верификации Miriscv
+
+Данный репозиторий создан для верификации ядер Miriscv с использованием link:https://gitlab.borisblade.ru/risc-v-verification/ibex/-/tree/master/vendor/google_riscv-dv[Google RISC-V DV] и link:https://gitlab.borisblade.ru/risc-v-verification/ibex/-/tree/master/dv/uvm/core_ibex[верификационного окружения ядра Ibex].

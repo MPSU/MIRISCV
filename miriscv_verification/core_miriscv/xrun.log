@@ -1,0 +1,98 @@
+xrun(64): 19.03-s009: (c) Copyright 1995-2019 Cadence Design Systems, Inc.
+TOOL:	xrun(64)	19.03-s009: Started on May 13, 2022 at 21:56:52 MSK
+xrun
+	-64bit
+	-R
+	-xmlibdirpath /home/a.silantev/Desktop/miriscv_verification/core_miriscv/out/seed-4291/rtl_sim
+	-svseed 4292
+	-svrnc rand_struct
+	+UVM_TESTNAME=miriscv_base_test
+	+UVM_VERBOSITY=UVM_LOW
+	+bin=/home/a.silantev/Desktop/miriscv_verification/core_miriscv/out/seed-4291/instr_gen/asm_test/riscv_mmu_stress_test_1.bin
+	+ibex_tracer_file_base=/home/a.silantev/Desktop/miriscv_verification/core_miriscv/out/seed-4291/rtl_sim/riscv_mmu_stress_test.4292/trace_core
+	-nokey
+	+signature_addr=8ffffffc
+	-input "@database -open /home/a.silantev/Desktop/miriscv_verification/core_miriscv/out/seed-4291/rtl_sim/riscv_mmu_stress_test.4292/waves -vcd -default"
+	-input "@probe -create miriscv_tb_top -all -depth all -variables"
+	-input @run
+
+   User defined plus("+") options:
+	+UVM_VERBOSITY=UVM_LOW
+	+bin=/home/a.silantev/Desktop/miriscv_verification/core_miriscv/out/seed-4291/instr_gen/asm_test/riscv_mmu_stress_test_1.bin
+	+ibex_tracer_file_base=/home/a.silantev/Desktop/miriscv_verification/core_miriscv/out/seed-4291/rtl_sim/riscv_mmu_stress_test.4292/trace_core
+	+signature_addr=8ffffffc
+
+Loading snapshot worklib.miriscv_tb_top:sv .................... Done
+xmsim: *W,XCLGNOPTM: The SystemVerilog constraint solver Xceligen options 'seed_only_rand and process_alternate_rng and ignore_worklib_name' are not specified and will default to 0. The recommended value for each of them is 1 which will become the default in a future release.
+SVSEED set from command line: 4292
+xmsim: *W,RNDXCELON: Xceligen, the new SystemVerilog constraint solver is used. Disabling Xceligen and using the legacy constraint solver is possible with "xrun/xmsim -xceligen on=0 ...".
+xmsim: *W,DSEM2009: This SystemVerilog design is simulated as per IEEE 1800-2009 SystemVerilog simulation semantics. Use -disable_sem2009 option for turning off SV 2009 simulation semantics.
+xcelium> source /tools/cadence/XCELIUM/1903/tools/xcelium/files/xmsimrc
+xcelium> source /tools/cadence/XCELIUM/1903/tools/methodology/UVM/CDNS-1.2/additions/sv/files/tcl/uvm_sim.tcl
+xcelium> database -open /home/a.silantev/Desktop/miriscv_verification/core_miriscv/out/seed-4291/rtl_sim/riscv_mmu_stress_test.4292/waves -vcd -default
+Created default VCD database /home/a.silantev/Desktop/miriscv_verification/core_miriscv/out/seed-4291/rtl_sim/riscv_mmu_stress_test.4292/waves
+xcelium> probe -create miriscv_tb_top -all -depth all -variables
+Created probe 1
+xcelium> run
+UVM_INFO /tools/cadence/XCELIUM/1903/tools/methodology/UVM/CDNS-1.2/sv/src/base/uvm_root.svh(412) @ 0: reporter [UVM/RELNOTES] 
+----------------------------------------------------------------
+CDNS-UVM-1.2 (19.03-s009)
+(C) 2007-2014 Mentor Graphics Corporation
+(C) 2007-2014 Cadence Design Systems, Inc.
+(C) 2006-2014 Synopsys, Inc.
+(C) 2011-2013 Cypress Semiconductor Corp.
+(C) 2013-2014 NVIDIA Corporation
+----------------------------------------------------------------
+
+  ***********       IMPORTANT RELEASE NOTES         ************
+
+  You are using a version of the UVM library that has been compiled
+  with `UVM_NO_DEPRECATED undefined.
+  See http://www.eda.org/svdb/view.php?id=3313 for more details.
+
+  You are using a version of the UVM library that has been compiled
+  with `UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR undefined.
+  See http://www.eda.org/svdb/view.php?id=3770 for more details.
+
+      (Specify +UVM_NO_RELNOTES to turn off this notice)
+
+UVM_INFO @ 0: reporter [RNTST] Running test miriscv_base_test...
+UVM_INFO /home/a.silantev/Desktop/miriscv_verification/core_miriscv/uvm/tests/miriscv_base_test.sv(92) @ 1990000: uvm_test_top [uvm_test_top] Running test : /home/a.silantev/Desktop/miriscv_verification/core_miriscv/out/seed-4291/instr_gen/asm_test/riscv_mmu_stress_test_1.bin
+SDI/Verilog Transaction Recording Facility Version 19.03-s009
+miriscv_tb_top.dut.u_ibex_tracer.printbuffer_dumpline.unmblk1: Writing execution trace to /home/a.silantev/Desktop/miriscv_verification/core_miriscv/out/seed-4291/rtl_sim/riscv_mmu_stress_test.4292/trace_core_00000000.log
+UVM_INFO /home/a.silantev/Desktop/miriscv_verification/core_miriscv/uvm/tests/miriscv_base_test.sv(108) @ 2005990000: uvm_test_top [uvm_test_top] Test was finished by timeout
+UVM_INFO /tools/cadence/XCELIUM/1903/tools/methodology/UVM/CDNS-1.2/sv/src/base/uvm_objection.svh(1271) @ 2005990000: reporter [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase
+
+--- RISC-V UVM TEST PASSED ---
+
+UVM_INFO /tools/cadence/XCELIUM/1903/tools/methodology/UVM/CDNS-1.2/sv/src/base/uvm_report_catcher.svh(705) @ 2005990000: reporter [UVM/REPORT/CATCHER] 
+--- UVM Report catcher Summary ---
+
+
+Number of demoted UVM_FATAL reports  :    0
+Number of demoted UVM_ERROR reports  :    0
+Number of demoted UVM_WARNING reports:    0
+Number of caught UVM_FATAL reports   :    0
+Number of caught UVM_ERROR reports   :    0
+Number of caught UVM_WARNING reports :    0
+
+UVM_INFO /tools/cadence/XCELIUM/1903/tools/methodology/UVM/CDNS-1.2/sv/src/base/uvm_report_server.svh(847) @ 2005990000: reporter [UVM/REPORT/SERVER] 
+--- UVM Report Summary ---
+
+Quit count :     0 of     1
+** Report counts by severity
+UVM_INFO :    6
+UVM_WARNING :    0
+UVM_ERROR :    0
+UVM_FATAL :    0
+** Report counts by id
+[RNTST]     1
+[TEST_DONE]     1
+[UVM/RELNOTES]     1
+[UVM/REPORT/CATCHER]     1
+[uvm_test_top]     2
+
+Simulation complete via $finish(1) at time 2005990 NS + 70
+/tools/cadence/XCELIUM/1903/tools/methodology/UVM/CDNS-1.2/sv/src/base/uvm_root.svh:543     $finish;
+xcelium> exit
+TOOL:	xrun(64)	19.03-s009: Exiting on May 13, 2022 at 21:57:03 MSK  (total: 00:00:11)

@@ -1,0 +1,8 @@
+- test: miriscv_two_instr_fetch_check
+  description: >
+    Self-checking test for the two instruction fetch at single cycle
+  iterations: 1
+  gen_test: miriscv_riscv_instr_base_test
+  rtl_test: miriscv_two_instr_fetch_check
+  no_iss: 1
+  no_post_compare: true
