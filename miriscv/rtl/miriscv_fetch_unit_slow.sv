@@ -7,7 +7,10 @@
  *
  ***********************************************************************************/
 
-module miriscv_fetch_unit
+  // This module implements a "slow" fetch unit with multiple unnecessary stalls,
+  // and was used for SoC Design Challenge 2023
+
+module miriscv_fetch_unit_slow
   import miriscv_pkg::XLEN;
   import miriscv_pkg::ILEN;
 (
@@ -23,8 +26,9 @@ module miriscv_fetch_unit
 
   // Core pipeline signals
   input  logic            cu_stall_f_i,
-  input  logic [XLEN-1:0] cu_force_pc_i,
   input  logic            cu_force_f_i,
+  input  logic [XLEN-1:0] cu_force_pc_i,
+
 
   output logic [XLEN-1:0] fetched_pc_addr_o,
   output logic [XLEN-1:0] fetched_pc_next_addr_o,
@@ -36,27 +40,22 @@ module miriscv_fetch_unit
   ////////////////////////
   // Local declarations //
   ////////////////////////
-
-  localparam BYTE_ADDR_W = $clog2(XLEN/8);
-
-  logic [15:0]     instr_rdata_s;
-  logic            misaligned_access;
-
   logic [XLEN-1:0] pc_ff;
   logic [XLEN-1:0] pc_next;
   logic [XLEN-1:0] pc_plus_inc;
   logic            fetch_en;
-  logic            compr_instr;
-
-  logic [XLEN-1:0] fetched_pc_ff;
-  logic [XLEN-1:0] fetched_pc_next_ff;
 
 
   //////////////////
   // Fetch logics //
   //////////////////
 
-  assign fetch_en = instr_req_o | cu_force_f_i | cu_stall_f_i;
+  assign fetch_en = fetch_rvalid_o | cu_force_f_i;
+
+  assign pc_plus_inc = pc_ff + 'd4;
+
+  assign pc_next     = cu_force_f_i ? cu_force_pc_i
+                                    : pc_plus_inc;
 
   always_ff @(posedge clk_i or negedge arstn_i) begin
     if (~arstn_i) begin
@@ -67,28 +66,13 @@ module miriscv_fetch_unit
     end
   end
 
-  assign pc_plus_inc  = pc_ff + 'd4;
-  assign pc_next      = cu_force_f_i ? cu_force_pc_i :
-                        cu_stall_f_i ? fetched_pc_ff : pc_plus_inc;
 
-  assign instr_req_o  = ~cu_force_f_i & ~cu_stall_f_i;
-
+  assign instr_req_o  = ~cu_stall_f_i & ~instr_rvalid_i & ~cu_force_f_i;
   assign instr_addr_o = pc_ff;
 
-  always_ff @(posedge clk_i or negedge arstn_i) begin
-    if (~arstn_i) begin
-      fetched_pc_ff      <= '0;
-      fetched_pc_next_ff <= '0;
-    end
-    else if (instr_req_o) begin
-      fetched_pc_ff      <= pc_ff;
-      fetched_pc_next_ff <= pc_next;
-    end
-  end
-
-  assign fetched_pc_addr_o       = fetched_pc_ff;
-  assign fetched_pc_next_addr_o  = fetched_pc_next_ff;
+  assign fetched_pc_addr_o       = pc_ff;
+  assign fetched_pc_next_addr_o  = pc_plus_inc;
   assign instr_o                 = instr_rdata_i;
-  assign fetch_rvalid_o          = instr_rvalid_i & ~cu_force_f_i;
+  assign fetch_rvalid_o          = instr_rvalid_i & ~cu_force_f_i & ~cu_stall_f_i;
 
 endmodule
