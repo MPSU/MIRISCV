@@ -1,5 +1,6 @@
 module miriscv_mem_data_stage
   import miriscv_pkg::XLEN;
+  import miriscv_pkg::ILEN;
   import miriscv_gpr_pkg::GPR_ADDR_W;
   import miriscv_decode_pkg::LSU_DATA;
   import miriscv_decode_pkg::ALU_DATA;
@@ -7,7 +8,9 @@ module miriscv_mem_data_stage
   import miriscv_lsu_pkg::MEM_ACCESS_W;
   import miriscv_decode_pkg::WB_SRC_W;
   import miriscv_lsu_pkg::*;
-(
+#(
+  parameter bit RVFI = 1'b0
+) (
   input  logic                    clk_i,
   input  logic                    arstn_i,
 
@@ -213,7 +216,7 @@ module miriscv_mem_data_stage
   assign mp_rvfi_rs2_rdata_o      = m_rvfi_rs2_rdata_i;
   assign mp_rvfi_current_pc_o     = m_rvfi_current_pc_i;
   assign mp_rvfi_next_pc_o        = m_rvfi_next_pc_i;
-  assign mp_rvfi_valid_o          = m_rvfi_valid_i & ~cu_stall_m_i;
+  assign mp_rvfi_valid_o          = m_rvfi_valid_i & ~cu_stall_mp_i;
   assign mp_rvfi_trap_o           = m_rvfi_trap_i;
   assign mp_rvfi_intr_o           = m_rvfi_intr_i;
   assign mp_rvfi_mem_req_o        = m_rvfi_mem_req_i;

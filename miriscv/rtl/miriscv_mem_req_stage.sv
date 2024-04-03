@@ -9,11 +9,14 @@
 
 module miriscv_mem_req_stage
   import miriscv_pkg::XLEN;
+  import miriscv_pkg::ILEN;
   import miriscv_gpr_pkg::GPR_ADDR_W;
   import miriscv_lsu_pkg::MEM_ACCESS_W;
   import miriscv_decode_pkg::WB_SRC_W;
   import miriscv_lsu_pkg::*;
-(
+#(
+  parameter bit RVFI = 1'b0
+) (
   // Clock, reset
   input  logic                    clk_i,
   input  logic                    arstn_i,
@@ -112,8 +115,7 @@ module miriscv_mem_req_stage
   output logic                    m_rvfi_mem_we_o,
   output logic [MEM_ACCESS_W-1:0] m_rvfi_mem_size_o,
   output logic [XLEN-1:0]         m_rvfi_mem_addr_o,
-  output logic [XLEN-1:0]         m_rvfi_mem_wdata_o,
-
+  output logic [XLEN-1:0]         m_rvfi_mem_wdata_o
 );
 
 
@@ -280,7 +282,7 @@ module miriscv_mem_req_stage
         m_rvfi_mem_wdata_o      <= '0;
       end
 
-      else if (cu_kill_e_i) begin
+      else if (cu_kill_m_i) begin
         m_rvfi_wb_we_o          <= '0;
         m_rvfi_wb_rd_addr_o     <= '0;
         m_rvfi_instr_o          <= '0;
@@ -302,7 +304,7 @@ module miriscv_mem_req_stage
         m_rvfi_mem_wdata_o      <= '0;
       end
 
-      else if (~cu_stall_e_i) begin
+      else if (~cu_stall_m_i) begin
         m_rvfi_wb_we_o          <= e_rvfi_wb_we_i;
         m_rvfi_wb_rd_addr_o     <= e_rvfi_wb_rd_addr_i;
         m_rvfi_instr_o          <= e_rvfi_instr_i;

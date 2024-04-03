@@ -15,6 +15,9 @@ module miriscv_core
   import miriscv_mdu_pkg::MDU_OP_W;
   import miriscv_lsu_pkg::MEM_ACCESS_W;
   import miriscv_decode_pkg::WB_SRC_W;
+#(
+  parameter bit RVFI = 1'b1
+)
 (
   // Clock, reset
   input  logic              clk_i,
@@ -476,6 +479,9 @@ module miriscv_core
   ///////////////////////
 
   miriscv_mem_data_stage
+  #(
+    .RVFI ( RVFI )
+  )
   i_memory_plus_stage
   (
     .clk_i               ( clk_i              ),
