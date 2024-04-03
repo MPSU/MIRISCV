@@ -20,6 +20,7 @@ module miriscv_control_unit
   input  logic                  d_stall_req_i,
   input  logic                  e_stall_req_i,
   input  logic                  m_stall_req_i,
+  input  logic                  mp_stall_req_i,
 
   input  logic [GPR_ADDR_W-1:0] f_cu_rs1_addr_i,
   input  logic                  f_cu_rs1_req_i,
@@ -32,28 +33,34 @@ module miriscv_control_unit
   input  logic [GPR_ADDR_W-1:0] e_cu_rd_addr_i,
   input  logic                  e_cu_rd_we_i,
 
+  input  logic [GPR_ADDR_W-1:0] m_cu_rd_addr_i,
+  input  logic                  m_cu_rd_we_i,
+
   input  logic                  f_valid_i,
   input  logic                  d_valid_i,
   input  logic                  e_valid_i,
   input  logic                  m_valid_i,
+  input  logic                  mp_valid_i,
 
-  input  logic                  m_branch_i,
-  input  logic                  m_jal_i,
-  input  logic                  m_jalr_i,
-  input  logic [XLEN-1:0]       m_target_pc_i,
-  input  logic [XLEN-1:0]       m_next_pc_i,
-  input  logic                  m_prediction_i,
-  input  logic                  m_br_j_taken_i,
+  input  logic                  mp_branch_i,
+  input  logic                  mp_jal_i,
+  input  logic                  mp_jalr_i,
+  input  logic [XLEN-1:0]       mp_target_pc_i,
+  input  logic [XLEN-1:0]       mp_next_pc_i,
+  input  logic                  mp_prediction_i,
+  input  logic                  mp_br_j_taken_i,
 
   output logic                  cu_stall_f_o,
   output logic                  cu_stall_d_o,
   output logic                  cu_stall_e_o,
   output logic                  cu_stall_m_o,
+  output logic                  cu_stall_mp_o,
 
   output logic                  cu_kill_f_o,
   output logic                  cu_kill_d_o,
   output logic                  cu_kill_e_o,
   output logic                  cu_kill_m_o,
+  output logic                  cu_kill_mp_o,
 
   output logic [XLEN-1:0]       cu_force_pc_o,
   output logic                  cu_force_f_o
@@ -76,6 +83,9 @@ module miriscv_control_unit
   logic       m_raw_hazard_rs2;
   logic       m_raw_hazard;
 
+  logic       mp_raw_hazard_rs1;
+  logic       mp_raw_hazard_rs2;
+  logic       mp_raw_hazard;
 
   //////////////////////
   // Pipeline control //
@@ -121,23 +131,39 @@ module miriscv_control_unit
                       | m_raw_hazard_rs2;
 
 
-  assign cu_stall_f_o = m_stall_req_i | e_stall_req_i | d_stall_req_i | e_raw_hazard | m_raw_hazard;
-  assign cu_stall_d_o = m_stall_req_i | e_stall_req_i | d_stall_req_i;
-  assign cu_stall_e_o = m_stall_req_i | e_stall_req_i;
-  assign cu_stall_m_o = m_stall_req_i;
+  assign mp_raw_hazard_rs1 = f_cu_rs1_req_i & f_valid_i
+                           & m_cu_rd_we_i & m_valid_i
+                           & (f_cu_rs1_addr_i == m_cu_rd_addr_i)
+                           & (m_cu_rd_addr_i != '0); // No hazards for x0
+
+  assign mp_raw_hazard_rs2 = f_cu_rs2_req_i & f_valid_i
+                           & m_cu_rd_we_i & m_valid_i
+                           & (f_cu_rs2_addr_i == m_cu_rd_addr_i)
+                           & (m_cu_rd_addr_i != '0); // No hazards for x0
+
+  assign mp_raw_hazard = mp_raw_hazard_rs1
+                       | mp_raw_hazard_rs2;
 
 
-  assign cu_mispredict = m_valid_i & (m_prediction_i ^ m_br_j_taken_i) ;
+  assign cu_stall_f_o =  mp_stall_req_i | m_stall_req_i | e_stall_req_i | d_stall_req_i | e_raw_hazard | m_raw_hazard | mp_raw_hazard;
+  assign cu_stall_d_o = mp_stall_req_i |m_stall_req_i | e_stall_req_i | d_stall_req_i;
+  assign cu_stall_e_o = mp_stall_req_i | m_stall_req_i | e_stall_req_i;
+  assign cu_stall_m_o = mp_stall_req_i | m_stall_req_i;
+  assign cu_stall_mp_o = mp_stall_req_i;
+
+
+  assign cu_mispredict = mp_valid_i & (mp_prediction_i ^ mp_br_j_taken_i) ;
 
   assign cu_kill_f_o = cu_mispredict;
   assign cu_kill_d_o = cu_mispredict;
   assign cu_kill_e_o = cu_mispredict;
   assign cu_kill_m_o = cu_mispredict;
+  assign cu_kill_mp_o = cu_mispredict;
 
 
   assign cu_force_pc_o = cu_boot_addr_load_en ? boot_addr_i
-                                              : m_br_j_taken_i ? m_target_pc_i
-                                                               : m_next_pc_i;
+                                              : mp_br_j_taken_i ? mp_target_pc_i
+                                                                : mp_next_pc_i;
 
   assign cu_force_f_o = cu_boot_addr_load_en | cu_mispredict;
 

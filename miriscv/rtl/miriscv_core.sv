@@ -15,9 +15,7 @@ module miriscv_core
   import miriscv_mdu_pkg::MDU_OP_W;
   import miriscv_lsu_pkg::MEM_ACCESS_W;
   import miriscv_decode_pkg::WB_SRC_W;
-#(
-  parameter bit RVFI = 1'b1
-) (
+(
   // Clock, reset
   input  logic              clk_i,
   input  logic              arstn_i,
@@ -72,45 +70,46 @@ module miriscv_core
   localparam d = 3'd1; // decode
   localparam e = 3'd2; // execute
   localparam m = 3'd3; // memory
-  localparam w = 3'd4; // writeback
+  localparam mp = 3'd4; // memory plus
+  localparam w = 3'd5; // writeback
 
   logic [XLEN-1:0]         current_pc      [f:f];
-  logic [XLEN-1:0]         next_pc         [f:m];
+  logic [XLEN-1:0]         next_pc         [f:mp];
 
   logic [ILEN-1:0]         instr           [f:f];
-  logic                    valid           [f:m];
+  logic                    valid           [f:mp];
 
-  logic                    gpr_wr_en       [d:m];
-  logic [GPR_ADDR_W-1:0]   gpr_wr_addr     [d:m];
-  logic [WB_SRC_W-1:0]     gpr_src_sel     [d:e];
-  logic [XLEN-1:0]         gpr_wr_data     [m:m];
+  logic                    gpr_wr_en       [d:mp];
+  logic [GPR_ADDR_W-1:0]   gpr_wr_addr     [d:mp];
+  logic [WB_SRC_W-1:0]     gpr_src_sel     [d:m];
+  logic [XLEN-1:0]         gpr_wr_data     [mp:mp];
 
   logic [XLEN-1:0]         op1             [d:d];
   logic [XLEN-1:0]         op2             [d:d];
 
-  logic [XLEN-1:0]         alu_result      [e:e];
-  logic [XLEN-1:0]         mdu_result      [e:e];
+  logic [XLEN-1:0]         alu_result      [e:m];
+  logic [XLEN-1:0]         mdu_result      [e:m];
 
   logic [ALU_OP_W-1:0]     alu_operation   [d:d];
   logic                    mdu_req         [d:d];
   logic [MDU_OP_W-1:0]     mdu_operation   [d:d];
 
-  logic                    mem_req         [d:e];
+  logic                    mem_req         [d:m];
   logic                    mem_we          [d:e];
-  logic [MEM_ACCESS_W-1:0] mem_size        [d:e];
-  logic [XLEN-1:0]         mem_addr        [d:e];
+  logic [MEM_ACCESS_W-1:0] mem_size        [d:m];
+  logic [XLEN-1:0]         mem_addr        [d:m];
   logic [XLEN-1:0]         mem_data        [d:e];
 
-  logic                    branch          [d:m];
-  logic                    jal             [d:m];
-  logic                    jalr            [d:m];
-  logic [XLEN-1:0]         target_pc       [d:m];
-  logic                    prediction      [d:m];
-  logic                    br_j_taken      [d:m];
+  logic                    branch          [d:mp];
+  logic                    jal             [d:mp];
+  logic                    jalr            [d:mp];
+  logic [XLEN-1:0]         target_pc       [d:mp];
+  logic                    prediction      [d:mp];
+  logic                    br_j_taken      [d:mp];
 
-  logic                    cu_stall_req    [f:m];
-  logic                    cu_stall        [f:m];
-  logic                    cu_kill         [f:m];
+  logic                    cu_stall_req    [f:mp];
+  logic                    cu_stall        [f:mp];
+  logic                    cu_kill         [f:mp];
   logic                    cu_force        [f:f];
   logic [XLEN-1:0]         cu_force_pc     [f:f];
 
@@ -119,7 +118,7 @@ module miriscv_core
   logic [GPR_ADDR_W-1:0]   cu_rs2_addr     [f:f];
   logic                    cu_rs2_req      [f:f];
 
-  logic [XLEN-1:0]         rvfi_wb_data    [m:w];
+  logic [XLEN-1:0]         rvfi_wb_data    [mp:w];
   logic                    rvfi_wb_we      [f:w];
   logic [GPR_ADDR_W-1:0]   rvfi_wb_rd_addr [f:w];
 
@@ -141,7 +140,7 @@ module miriscv_core
   logic [MEM_ACCESS_W-1:0] rvfi_mem_size   [f:w];
   logic [XLEN-1:0]         rvfi_mem_addr   [f:w];
   logic [XLEN-1:0]         rvfi_mem_wdata  [f:w];
-  logic [XLEN-1:0]         rvfi_mem_rdata  [m:w];
+  logic [XLEN-1:0]         rvfi_mem_rdata  [mp:w];
 
 
   /////////////////
@@ -198,9 +197,9 @@ module miriscv_core
     .f_next_pc_i         ( next_pc         [f] ),
     .f_valid_i           ( valid           [f] ),
 
-    .m_gpr_wr_en_i       ( gpr_wr_en       [m] ),
-    .m_gpr_wr_data_i     ( gpr_wr_data     [m] ),
-    .m_gpr_wr_addr_i     ( gpr_wr_addr     [m] ),
+    .m_gpr_wr_en_i       ( gpr_wr_en       [mp] ),
+    .m_gpr_wr_data_i     ( gpr_wr_data     [mp] ),
+    .m_gpr_wr_addr_i     ( gpr_wr_addr     [mp] ),
 
     .d_valid_o           ( valid           [d] ),
 
@@ -369,7 +368,7 @@ module miriscv_core
   // Memory stage //
   //////////////////
 
-  miriscv_memory_stage
+  miriscv_mem_req_stage
   #(
     .RVFI ( RVFI )
   )
@@ -408,7 +407,10 @@ module miriscv_core
     .m_valid_o           ( valid           [m] ),
     .m_gpr_wr_en_o       ( gpr_wr_en       [m] ),
     .m_gpr_wr_addr_o     ( gpr_wr_addr     [m] ),
-    .m_gpr_wr_data_o     ( gpr_wr_data     [m] ),
+    .m_gpr_src_sel_o     ( gpr_src_sel     [m] ),
+
+    .m_alu_result_o      ( alu_result      [m] ),
+    .m_mdu_result_o      ( mdu_result      [m] ),
 
     .m_branch_o          ( branch          [m] ),
     .m_jal_o             ( jal             [m] ),
@@ -418,8 +420,10 @@ module miriscv_core
     .m_prediction_o      ( prediction      [m] ),
     .m_br_j_taken_o      ( br_j_taken      [m] ),
 
-    .data_rvalid_i       ( data_rvalid_i       ),
-    .data_rdata_i        ( data_rdata_i        ),
+    .m_mem_req_o         ( mem_req         [m] ),
+    .m_mem_size_o        ( mem_size        [m] ),
+    .m_mem_addr_o        ( mem_addr        [m] ),
+
     .data_req_o          ( data_req_o          ),
     .data_we_o           ( data_we_o           ),
     .data_be_o           ( data_be_o           ),
@@ -446,7 +450,6 @@ module miriscv_core
     .e_rvfi_mem_addr_i   ( rvfi_mem_addr   [e] ),
     .e_rvfi_mem_wdata_i  ( rvfi_mem_wdata  [e] ),
 
-    .m_rvfi_wb_data_o    ( rvfi_wb_data    [m] ),
     .m_rvfi_wb_we_o      ( rvfi_wb_we      [m] ),
     .m_rvfi_wb_rd_addr_o ( rvfi_wb_rd_addr [m] ),
     .m_rvfi_instr_o      ( rvfi_instr      [m] ),
@@ -465,8 +468,102 @@ module miriscv_core
     .m_rvfi_mem_we_o     ( rvfi_mem_we     [m] ),
     .m_rvfi_mem_size_o   ( rvfi_mem_size   [m] ),
     .m_rvfi_mem_addr_o   ( rvfi_mem_addr   [m] ),
-    .m_rvfi_mem_wdata_o  ( rvfi_mem_wdata  [m] ),
-    .m_rvfi_mem_rdata_o  ( rvfi_mem_rdata  [m] )
+    .m_rvfi_mem_wdata_o  ( rvfi_mem_wdata  [m] )
+  );
+
+  ///////////////////////
+  // Memory plus stage //
+  ///////////////////////
+
+  miriscv_mem_data_stage
+  i_memory_plus_stage
+  (
+    .clk_i               ( clk_i              ),
+    .arstn_i             ( arstn_i            ),
+
+    .cu_stall_mp_i       ( cu_stall       [mp]),
+    .cu_kill_mp_i        ( cu_kill        [mp]),
+    .mp_stall_req_o      ( cu_stall_req   [mp]),
+
+    .m_valid_i           ( valid          [m] ),
+
+    .m_gpr_wr_en_i       ( gpr_wr_en      [m] ),
+    .m_gpr_wr_addr_i     ( gpr_wr_addr    [m] ),
+    .m_gpr_src_sel_i     ( gpr_src_sel    [m] ),
+
+    .m_alu_result_i      ( alu_result     [m] ),
+    .m_mdu_result_i      ( mdu_result     [m] ),
+
+    .m_branch_i          ( branch         [m] ),
+    .m_jal_i             ( jal            [m] ),
+    .m_jalr_i            ( jalr           [m] ),
+    .m_target_pc_i       ( target_pc      [m] ),
+    .m_next_pc_i         ( next_pc        [m] ),
+    .m_prediction_i      ( prediction     [m] ),
+    .m_br_j_taken_i      ( br_j_taken     [m] ),
+
+    .m_mem_req_i         ( mem_req        [m] ),
+    .m_mem_size_i        ( mem_size       [m] ),
+    .m_mem_addr_i        ( mem_addr       [m] ),
+
+    .mp_valid_o          ( valid          [mp]),
+    .mp_gpr_wr_en_o      ( gpr_wr_en      [mp]),
+    .mp_gpr_wr_addr_o    ( gpr_wr_addr    [mp]),
+    .mp_gpr_wr_data_o    ( gpr_wr_data    [mp]),
+
+    .mp_branch_o         ( branch         [mp]),
+    .mp_jal_o            ( jal            [mp]),
+    .mp_jalr_o           ( jalr           [mp]),
+    .mp_target_pc_o      ( target_pc      [mp]),
+    .mp_next_pc_o        ( next_pc        [mp]),
+    .mp_prediction_o     ( prediction     [mp]),
+    .mp_br_j_taken_o     ( br_j_taken     [mp]),
+
+    .data_rvalid_i       ( data_rvalid_i      ),
+    .data_rdata_i        ( data_rdata_i       ),
+
+    .m_rvfi_wb_we_i       ( rvfi_wb_we      [m] ),
+    .m_rvfi_wb_rd_addr_i  ( rvfi_wb_rd_addr [m] ),
+    .m_rvfi_instr_i       ( rvfi_instr      [m] ),
+    .m_rvfi_rs1_addr_i    ( rvfi_rs1_addr   [m] ),
+    .m_rvfi_rs2_addr_i    ( rvfi_rs2_addr   [m] ),
+    .m_rvfi_op1_gpr_i     ( rvfi_op1_gpr    [m] ),
+    .m_rvfi_op2_gpr_i     ( rvfi_op2_gpr    [m] ),
+    .m_rvfi_rs1_rdata_i   ( rvfi_rs1_rdata  [m] ),
+    .m_rvfi_rs2_rdata_i   ( rvfi_rs2_rdata  [m] ),
+    .m_rvfi_current_pc_i  ( rvfi_current_pc [m] ),
+    .m_rvfi_next_pc_i     ( rvfi_next_pc    [m] ),
+    .m_rvfi_valid_i       ( rvfi_valid      [m] ),
+    .m_rvfi_trap_i        ( rvfi_trap       [m] ),
+    .m_rvfi_intr_i        ( rvfi_intr       [m] ),
+    .m_rvfi_mem_req_i     ( rvfi_mem_req    [m] ),
+    .m_rvfi_mem_we_i      ( rvfi_mem_we     [m] ),
+    .m_rvfi_mem_size_i    ( rvfi_mem_size   [m] ),
+    .m_rvfi_mem_addr_i    ( rvfi_mem_addr   [m] ),
+    .m_rvfi_mem_wdata_i   ( rvfi_mem_wdata  [m] ),
+
+    .mp_rvfi_wb_data_o    ( rvfi_wb_data    [mp] ),
+    .mp_rvfi_wb_we_o      ( rvfi_wb_we      [mp] ),
+    .mp_rvfi_wb_rd_addr_o ( rvfi_wb_rd_addr [mp] ),
+    .mp_rvfi_instr_o      ( rvfi_instr      [mp] ),
+    .mp_rvfi_rs1_addr_o   ( rvfi_rs1_addr   [mp] ),
+    .mp_rvfi_rs2_addr_o   ( rvfi_rs2_addr   [mp] ),
+    .mp_rvfi_op1_gpr_o    ( rvfi_op1_gpr    [mp] ),
+    .mp_rvfi_op2_gpr_o    ( rvfi_op2_gpr    [mp] ),
+    .mp_rvfi_rs1_rdata_o  ( rvfi_rs1_rdata  [mp] ),
+    .mp_rvfi_rs2_rdata_o  ( rvfi_rs2_rdata  [mp] ),
+    .mp_rvfi_current_pc_o ( rvfi_current_pc [mp] ),
+    .mp_rvfi_next_pc_o    ( rvfi_next_pc    [mp] ),
+    .mp_rvfi_valid_o      ( rvfi_valid      [mp] ),
+    .mp_rvfi_trap_o       ( rvfi_trap       [mp] ),
+    .mp_rvfi_intr_o       ( rvfi_intr       [mp] ),
+    .mp_rvfi_mem_req_o    ( rvfi_mem_req    [mp] ),
+    .mp_rvfi_mem_we_o     ( rvfi_mem_we     [mp] ),
+    .mp_rvfi_mem_size_o   ( rvfi_mem_size   [mp] ),
+    .mp_rvfi_mem_addr_o   ( rvfi_mem_addr   [mp] ),
+    .mp_rvfi_mem_wdata_o  ( rvfi_mem_wdata  [mp] ),
+    .mp_rvfi_mem_rdata_o  ( rvfi_mem_rdata  [mp] )
+
   );
 
 
@@ -486,11 +583,13 @@ module miriscv_core
     .d_stall_req_i      ( cu_stall_req   [d] ),
     .e_stall_req_i      ( cu_stall_req   [e] ),
     .m_stall_req_i      ( cu_stall_req   [m] ),
+    .mp_stall_req_i     ( cu_stall_req   [mp]),
 
     .f_valid_i          ( valid          [f] ),
     .d_valid_i          ( valid          [d] ),
     .e_valid_i          ( valid          [e] ),
     .m_valid_i          ( valid          [m] ),
+    .mp_valid_i         ( valid          [mp]),
 
     .f_cu_rs1_addr_i    ( cu_rs1_addr    [f] ),
     .f_cu_rs1_req_i     ( cu_rs1_req     [f] ),
@@ -503,23 +602,28 @@ module miriscv_core
     .e_cu_rd_addr_i     ( gpr_wr_addr    [e] ),
     .e_cu_rd_we_i       ( gpr_wr_en      [e] ),
 
-    .m_branch_i         ( branch         [m] ),
-    .m_jal_i            ( jal            [m] ),
-    .m_jalr_i           ( jalr           [m] ),
-    .m_target_pc_i      ( target_pc      [m] ),
-    .m_next_pc_i        ( next_pc        [m] ),
-    .m_prediction_i     ( prediction     [m] ),
-    .m_br_j_taken_i     ( br_j_taken     [m] ),
+    .m_cu_rd_addr_i     ( gpr_wr_addr    [m] ),
+    .m_cu_rd_we_i       ( gpr_wr_en      [m] ),
+
+    .mp_branch_i        ( branch         [mp]),
+    .mp_jal_i           ( jal            [mp]),
+    .mp_jalr_i          ( jalr           [mp]),
+    .mp_target_pc_i     ( target_pc      [mp]),
+    .mp_next_pc_i       ( next_pc        [mp]),
+    .mp_prediction_i    ( prediction     [mp]),
+    .mp_br_j_taken_i    ( br_j_taken     [mp]),
 
     .cu_stall_f_o       ( cu_stall       [f] ),
     .cu_stall_d_o       ( cu_stall       [d] ),
     .cu_stall_e_o       ( cu_stall       [e] ),
     .cu_stall_m_o       ( cu_stall       [m] ),
+    .cu_stall_mp_o      ( cu_stall       [mp]),
 
     .cu_kill_f_o        ( cu_kill        [f] ),
     .cu_kill_d_o        ( cu_kill        [d] ),
     .cu_kill_e_o        ( cu_kill        [e] ),
     .cu_kill_m_o        ( cu_kill        [m] ),
+    .cu_kill_mp_o       ( cu_kill        [mp]),
 
     .cu_force_pc_o      ( cu_force_pc    [f] ),
     .cu_force_f_o       ( cu_force       [f] )
@@ -530,27 +634,27 @@ module miriscv_core
   // RVFI //
   //////////
 
-  assign rvfi_instr      [w] = rvfi_instr      [m];
-  assign rvfi_rs1_addr   [w] = rvfi_rs1_addr   [m];
-  assign rvfi_rs2_addr   [w] = rvfi_rs2_addr   [m];
-  assign rvfi_op1_gpr    [w] = rvfi_op1_gpr    [m];
-  assign rvfi_op2_gpr    [w] = rvfi_op2_gpr    [m];
-  assign rvfi_rs1_rdata  [w] = rvfi_rs1_rdata  [m];
-  assign rvfi_rs2_rdata  [w] = rvfi_rs2_rdata  [m];
-  assign rvfi_wb_rd_addr [w] = rvfi_wb_rd_addr [m];
-  assign rvfi_wb_we      [w] = rvfi_wb_we      [m];
-  assign rvfi_wb_data    [w] = rvfi_wb_data    [m];
-  assign rvfi_mem_we     [w] = rvfi_mem_we     [m];
-  assign rvfi_mem_req    [w] = rvfi_mem_req    [m];
-  assign rvfi_mem_size   [w] = rvfi_mem_size   [m];
-  assign rvfi_mem_addr   [w] = rvfi_mem_addr   [m];
-  assign rvfi_mem_wdata  [w] = rvfi_mem_wdata  [m];
-  assign rvfi_mem_rdata  [w] = rvfi_mem_rdata  [m];
-  assign rvfi_current_pc [w] = rvfi_current_pc [m];
-  assign rvfi_next_pc    [w] = rvfi_next_pc    [m];
-  assign rvfi_valid      [w] = rvfi_valid      [m];
-  assign rvfi_intr       [w] = rvfi_intr       [m];
-  assign rvfi_trap       [w] = rvfi_trap       [m];
+  assign rvfi_instr      [w] = rvfi_instr      [mp];
+  assign rvfi_rs1_addr   [w] = rvfi_rs1_addr   [mp];
+  assign rvfi_rs2_addr   [w] = rvfi_rs2_addr   [mp];
+  assign rvfi_op1_gpr    [w] = rvfi_op1_gpr    [mp];
+  assign rvfi_op2_gpr    [w] = rvfi_op2_gpr    [mp];
+  assign rvfi_rs1_rdata  [w] = rvfi_rs1_rdata  [mp];
+  assign rvfi_rs2_rdata  [w] = rvfi_rs2_rdata  [mp];
+  assign rvfi_wb_rd_addr [w] = rvfi_wb_rd_addr [mp];
+  assign rvfi_wb_we      [w] = rvfi_wb_we      [mp];
+  assign rvfi_wb_data    [w] = rvfi_wb_data    [mp];
+  assign rvfi_mem_we     [w] = rvfi_mem_we     [mp];
+  assign rvfi_mem_req    [w] = rvfi_mem_req    [mp];
+  assign rvfi_mem_size   [w] = rvfi_mem_size   [mp];
+  assign rvfi_mem_addr   [w] = rvfi_mem_addr   [mp];
+  assign rvfi_mem_wdata  [w] = rvfi_mem_wdata  [mp];
+  assign rvfi_mem_rdata  [w] = rvfi_mem_rdata  [mp];
+  assign rvfi_current_pc [w] = rvfi_current_pc [mp];
+  assign rvfi_next_pc    [w] = rvfi_next_pc    [mp];
+  assign rvfi_valid      [w] = rvfi_valid      [mp];
+  assign rvfi_intr       [w] = rvfi_intr       [mp];
+  assign rvfi_trap       [w] = rvfi_trap       [mp];
 
 
   if (RVFI) begin
