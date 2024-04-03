@@ -29,6 +29,7 @@ module miriscv_test_soc
   // data memory interface
   logic              core_data_rvalid_ff;
   logic [XLEN-1:0]   core_data_rdata;
+  logic [XLEN-1:0]   core_data_raddr_ff;
   logic              core_data_req;
   logic              core_data_we;
   logic [XLEN/8-1:0] core_data_be;
@@ -94,9 +95,12 @@ module miriscv_test_soc
       timer_prdata_ff <= timer_prdata;
   end
 
+  always_ff @(posedge clk_i) begin
+    if (core_data_req)
+      core_data_raddr_ff <= core_data_addr;
+  end
 
-  assign core_data_rdata  = (core_data_addr[31] == 'b1) ? (core_data_addr[12] == 'b1) ? timer_prdata_ff : uart_prdata_ff : dmem_data_rdata;
-
+  assign core_data_rdata  = (core_data_raddr_ff[31] == 'b1) ? (core_data_raddr_ff[12] == 'b1) ? timer_prdata_ff : uart_prdata_ff : dmem_data_rdata;
 
   always_ff @(posedge clk_i) begin
     if(!arstn_i) begin
