@@ -143,6 +143,8 @@ module miriscv_core
   logic [XLEN-1:0]         rvfi_mem_wdata  [f:w];
   logic [XLEN-1:0]         rvfi_mem_rdata  [m:w];
 
+  logic                    d_taken;
+  logic [XLEN-1:0]         d_target;
 
   /////////////////
   // Fetch stage //
@@ -192,6 +194,9 @@ module miriscv_core
     .cu_stall_d_i        ( cu_stall        [d] ),
     .cu_stall_f_i        ( cu_stall        [f] ),
     .d_stall_req_o       ( cu_stall_req    [d] ),
+
+    .d_taken_o           ( d_taken             ),
+    .d_target_o          ( d_target            ),
 
     .f_instr_i           ( instr           [f] ),
     .f_current_pc_i      ( current_pc      [f] ),
@@ -510,6 +515,9 @@ module miriscv_core
     .m_next_pc_i        ( next_pc        [m] ),
     .m_prediction_i     ( prediction     [m] ),
     .m_br_j_taken_i     ( br_j_taken     [m] ),
+
+    .d_taken_i          ( d_taken            ),
+    .d_target_i         ( d_target           ),
 
     .cu_stall_f_o       ( cu_stall       [f] ),
     .cu_stall_d_o       ( cu_stall       [d] ),

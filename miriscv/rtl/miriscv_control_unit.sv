@@ -45,6 +45,9 @@ module miriscv_control_unit
   input  logic                  m_prediction_i,
   input  logic                  m_br_j_taken_i,
 
+  input  logic                  d_taken_i,
+  input  logic [XLEN-1:0]       d_target_i,
+
   output logic                  cu_stall_f_o,
   output logic                  cu_stall_d_o,
   output logic                  cu_stall_e_o,
@@ -129,7 +132,10 @@ module miriscv_control_unit
 
   assign cu_mispredict = m_valid_i & (m_prediction_i ^ m_br_j_taken_i) ;
 
-  assign cu_kill_f_o = cu_mispredict;
+  logic decode_taken;
+  assign decode_taken = f_valid_i & d_taken_i & ~cu_stall_d_o;
+
+  assign cu_kill_f_o = cu_mispredict | decode_taken;
   assign cu_kill_d_o = cu_mispredict;
   assign cu_kill_e_o = cu_mispredict;
   assign cu_kill_m_o = cu_mispredict;
@@ -137,8 +143,9 @@ module miriscv_control_unit
 
   assign cu_force_pc_o = cu_boot_addr_load_en ? boot_addr_i
                                               : m_br_j_taken_i ? m_target_pc_i
-                                                               : m_next_pc_i;
+                                                               : decode_taken ? d_target_i
+                                                                              : m_next_pc_i;
 
-  assign cu_force_f_o = cu_boot_addr_load_en | cu_mispredict;
+  assign cu_force_f_o = cu_boot_addr_load_en | cu_mispredict | decode_taken;
 
 endmodule

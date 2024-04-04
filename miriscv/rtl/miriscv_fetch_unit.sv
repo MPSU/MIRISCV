@@ -78,11 +78,18 @@ module miriscv_fetch_unit
   always_ff @(posedge clk_i or negedge arstn_i) begin
     if (~arstn_i) begin
       fetched_pc_ff      <= '0;
+    end
+    else if (instr_req_o | cu_force_f_i) begin
+      fetched_pc_ff      <=  cu_force_f_i ? cu_force_pc_i : pc_ff;
+    end
+  end
+
+  always_ff @(posedge clk_i or negedge arstn_i) begin
+    if (~arstn_i) begin
       fetched_pc_next_ff <= '0;
     end
-    else if (instr_req_o) begin
-      fetched_pc_ff      <= pc_ff;
-      fetched_pc_next_ff <= pc_next;
+    else if (instr_req_o | cu_force_f_i) begin
+      fetched_pc_next_ff      <= cu_force_f_i ? (cu_force_pc_i + 4) : pc_next;
     end
   end
 
