@@ -57,7 +57,6 @@
     cmd:
       - "vmap mtiUvm $QUESTA_HOME/questasim/uvm-1.2"
       - "vlog -64
-              -access=rwc
               -f miriscv_dv.f
               -sv
               -mfcu -cuname design_cuname
